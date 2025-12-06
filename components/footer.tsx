@@ -3,11 +3,11 @@ import Link from 'next/link';
 
 export function Footer() {
   return (
-    <footer className="border-t border-neutral-800 bg-neutral-950">
+    <footer className="border-t border-neutral-800 bg-neutral-950 flex-shrink-0">
       <div className="container mx-auto px-4 py-6">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-sm text-neutral-400">
-            © {new Date().getFullYear()} Screenshot Studio. Tous droits réservés.
+            © {new Date().getFullYear()} Review Beautifier. Tous droits réservés.
           </p>
           <div className="flex items-center gap-4">
             <Link

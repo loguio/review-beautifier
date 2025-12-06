@@ -3,12 +3,12 @@
 import { useState, useRef, useCallback } from 'react';
 import { toPng } from 'html-to-image';
 import {
-  Upload,
   Download,
   Palette,
   Move,
   Circle,
   Sparkles,
+  Star,
 } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import {
@@ -19,6 +19,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Github, Linkedin } from 'lucide-react';
+import Link from 'next/link';
 
 const backgrounds = [
   {
@@ -52,71 +57,42 @@ const backgrounds = [
 ];
 
 const shadows = [
-  { id: 'none', name: 'Aucune', value: 'none' },
-  { id: 'light', name: 'Légère', value: '0 4px 6px -1px rgba(0,0,0,0.1)' },
+  { id: 'none', name: 'None', value: 'none' },
+  { id: 'light', name: 'Light', value: '0 4px 6px -1px rgba(0,0,0,0.1)' },
   {
     id: 'medium',
-    name: 'Moyenne',
+    name: 'Medium',
     value: '0 10px 15px -3px rgba(0,0,0,0.2)',
   },
   {
     id: 'strong',
-    name: 'Forte',
+    name: 'Strong',
     value: '0 25px 50px -12px rgba(0,0,0,0.4)',
   },
 ];
 
 export default function Home() {
-  const [image, setImage] = useState<string | null>(null);
+  const [reviewText, setReviewText] = useState('This service is amazing...');
+  const [authorName, setAuthorName] = useState('Thomas D.');
+  const [authorRole, setAuthorRole] = useState('CEO, TechStart');
+  const [rating, setRating] = useState(5);
   const [background, setBackground] = useState(backgrounds[0].value);
   const [padding, setPadding] = useState([64]);
   const [radius, setRadius] = useState([12]);
   const [shadow, setShadow] = useState(shadows[2].value);
-  const [isDragging, setIsDragging] = useState(false);
 
-  const canvasRef = useRef<HTMLDivElement>(null);
+  const previewRef = useRef<HTMLDivElement>(null);
 
-  const handleFileUpload = useCallback((file: File) => {
-    if (file && file.type.startsWith('image/')) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setImage(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  }, []);
-
-  const handleDrop = useCallback(
-    (e: React.DragEvent<HTMLDivElement>) => {
-      e.preventDefault();
-      setIsDragging(false);
-      const file = e.dataTransfer.files[0];
-      if (file) {
-        handleFileUpload(file);
-      }
-    },
-    [handleFileUpload]
-  );
-
-  const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDragging(true);
-  }, []);
-
-  const handleDragLeave = useCallback(() => {
-    setIsDragging(false);
-  }, []);
-
-  const handleExport = useCallback(async () => {
-    if (canvasRef.current === null) return;
+  const handleDownload = useCallback(async () => {
+    if (previewRef.current === null) return;
 
     try {
-      const dataUrl = await toPng(canvasRef.current, {
+      const dataUrl = await toPng(previewRef.current, {
         cacheBust: true,
         pixelRatio: 2,
       });
       const link = document.createElement('a');
-      link.download = 'screenshot-beautified.png';
+      link.download = 'review-beautified.png';
       link.href = dataUrl;
       link.click();
     } catch (err) {
@@ -124,26 +100,111 @@ export default function Home() {
     }
   }, []);
 
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  const getAvatarColor = (name: string) => {
+    const colors = [
+      'bg-blue-500',
+      'bg-purple-500',
+      'bg-pink-500',
+      'bg-indigo-500',
+      'bg-teal-500',
+      'bg-orange-500',
+      'bg-green-500',
+      'bg-red-500',
+    ];
+    const index = name.charCodeAt(0) % colors.length;
+    return colors[index];
+  };
+
   return (
-    <div className="flex flex-1 bg-neutral-900">
-      <aside className="w-80 bg-neutral-950 border-r border-neutral-800 flex flex-col">
-        <div className="p-6 border-b border-neutral-800">
+    <div className="flex flex-1 bg-neutral-900 h-full overflow-hidden">
+      <aside className="w-80 bg-neutral-950 border-r border-neutral-800 flex flex-col h-full">
+        <div className="p-6 border-b border-neutral-800 flex-shrink-0">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg">
               <Sparkles className="w-5 h-5 text-white" />
             </div>
             <div>
               <h1 className="text-xl font-semibold text-white">
-                Screenshot Studio
+                Review Beautifier
               </h1>
               <p className="text-xs text-neutral-400">
-                Embellissez vos captures
+                Customer review image generator
               </p>
             </div>
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        <div className="flex-1 overflow-y-auto p-6 space-y-6 min-h-0">
+          <div className="space-y-3">
+            <Label className="text-sm font-medium text-neutral-300">
+              Review
+            </Label>
+            <Textarea
+              value={reviewText}
+              onChange={(e) => setReviewText(e.target.value)}
+              placeholder="Enter review text..."
+              className="bg-neutral-900 border-neutral-800 text-white placeholder:text-neutral-500 min-h-[120px]"
+            />
+          </div>
+
+          <div className="space-y-3">
+            <Label className="text-sm font-medium text-neutral-300">
+              Author name
+            </Label>
+            <Input
+              value={authorName}
+              onChange={(e) => setAuthorName(e.target.value)}
+              placeholder="Thomas D."
+              className="bg-neutral-900 border-neutral-800 text-white placeholder:text-neutral-500"
+            />
+          </div>
+
+          <div className="space-y-3">
+            <Label className="text-sm font-medium text-neutral-300">
+              Role / Company
+            </Label>
+            <Input
+              value={authorRole}
+              onChange={(e) => setAuthorRole(e.target.value)}
+              placeholder="CEO, TechStart"
+              className="bg-neutral-900 border-neutral-800 text-white placeholder:text-neutral-500"
+            />
+          </div>
+
+          <div className="space-y-3">
+            <Label className="text-sm font-medium text-neutral-300">
+              Rating (stars)
+            </Label>
+            <Select
+              value={rating.toString()}
+              onValueChange={(value) => setRating(parseInt(value))}
+            >
+              <SelectTrigger className="bg-neutral-900 border-neutral-800 text-white">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-neutral-900 border-neutral-800">
+                {[1, 2, 3, 4, 5].map((num) => (
+                  <SelectItem
+                    key={num}
+                    value={num.toString()}
+                    className="text-white hover:bg-neutral-800"
+                  >
+                    {num} {num === 1 ? 'star' : 'stars'}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="space-y-3">
             <div className="flex items-center gap-2 text-sm font-medium text-neutral-300">
               <Palette className="w-4 h-4" />
@@ -195,7 +256,7 @@ export default function Home() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-sm font-medium text-neutral-300">
                 <Circle className="w-4 h-4" />
-                Arrondi
+                Border radius
               </div>
               <span className="text-xs text-neutral-400">{radius[0]}px</span>
             </div>
@@ -212,7 +273,7 @@ export default function Home() {
           <div className="space-y-3">
             <div className="flex items-center gap-2 text-sm font-medium text-neutral-300">
               <Sparkles className="w-4 h-4" />
-              Ombre
+              Shadow
             </div>
             <Select value={shadow} onValueChange={setShadow}>
               <SelectTrigger className="bg-neutral-900 border-neutral-800 text-white">
@@ -233,73 +294,98 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="p-6 border-t border-neutral-800">
+        <div className="p-6 border-t border-neutral-800 flex-shrink-0 bg-neutral-950 space-y-4">
           <Button
-            onClick={handleExport}
-            disabled={!image}
+            onClick={handleDownload}
             className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium"
           >
             <Download className="w-4 h-4 mr-2" />
-            Télécharger en PNG
+            Download as PNG
           </Button>
+          
+          <div className="flex items-center justify-between pt-2 border-t border-neutral-800">
+            <p className="text-xs text-neutral-500">
+              © {new Date().getFullYear()} Review Beautifier
+            </p>
+            <div className="flex items-center gap-3">
+              <Link
+                href="https://github.com/loguio"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-neutral-400 hover:text-white transition-colors"
+                aria-label="Visit my GitHub profile"
+              >
+                <Github className="w-4 h-4" />
+              </Link>
+              <Link
+                href="https://www.linkedin.com/in/marius-bourse-52618a220/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-neutral-400 hover:text-blue-400 transition-colors"
+                aria-label="Visit my LinkedIn profile"
+              >
+                <Linkedin className="w-4 h-4" />
+              </Link>
+            </div>
+          </div>
         </div>
       </aside>
 
       <main className="flex-1 bg-neutral-800 flex items-center justify-center p-8 overflow-hidden">
-        {!image ? (
+        <div className="w-full h-full flex items-center justify-center">
           <div
-            onDrop={handleDrop}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            className={`w-full max-w-2xl h-96 border-2 border-dashed rounded-xl flex flex-col items-center justify-center gap-4 transition-colors ${
-              isDragging
-                ? 'border-blue-500 bg-blue-500/10'
-                : 'border-neutral-600 bg-neutral-900/50'
-            }`}
+            ref={previewRef}
+            style={{
+              background: background,
+              padding: `${padding[0]}px`,
+            }}
+            className="inline-block rounded-2xl"
           >
-            <div className="p-4 bg-neutral-800 rounded-full">
-              <Upload className="w-8 h-8 text-neutral-400" />
-            </div>
-            <div className="text-center">
-              <p className="text-lg font-medium text-white mb-1">
-                Glissez une image ici
-              </p>
-              <p className="text-sm text-neutral-400">
-                ou cliquez pour sélectionner
-              </p>
-            </div>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) handleFileUpload(file);
-              }}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-            />
-          </div>
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
             <div
-              ref={canvasRef}
+              className="bg-white rounded-xl p-8 max-w-2xl"
               style={{
-                background: background,
-                padding: `${padding[0]}px`,
+                borderRadius: `${radius[0]}px`,
+                boxShadow: shadow,
               }}
-              className="inline-block rounded-2xl"
             >
-              <img
-                src={image}
-                alt="Screenshot"
-                style={{
-                  borderRadius: `${radius[0]}px`,
-                  boxShadow: shadow,
-                }}
-                className="max-w-full max-h-[calc(100vh-200px)] w-auto h-auto object-contain"
-              />
+              {/* Stars */}
+              <div className="flex gap-1 mb-6">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star
+                    key={star}
+                    className={`w-6 h-6 ${
+                      star <= rating
+                        ? 'fill-yellow-400 text-yellow-400'
+                        : 'fill-neutral-200 text-neutral-200'
+                    }`}
+                  />
+                ))}
+              </div>
+
+              {/* Review text */}
+              <p className="text-2xl font-serif text-neutral-800 leading-relaxed mb-8">
+                &ldquo;{reviewText}&rdquo;
+              </p>
+
+              {/* Author */}
+              <div className="flex items-center gap-4">
+                <div
+                  className={`w-12 h-12 rounded-full ${getAvatarColor(
+                    authorName
+                  )} flex items-center justify-center text-white font-semibold text-lg`}
+                >
+                  {getInitials(authorName)}
+                </div>
+                <div>
+                  <p className="font-semibold text-neutral-900 text-lg">
+                    {authorName}
+                  </p>
+                  <p className="text-neutral-600 text-sm">{authorRole}</p>
+                </div>
+              </div>
             </div>
           </div>
-        )}
+        </div>
       </main>
     </div>
   );
