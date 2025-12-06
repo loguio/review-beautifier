@@ -24,7 +24,15 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Github, Linkedin } from 'lucide-react';
 import Link from 'next/link';
-
+declare global {
+  interface Window {
+    gtag: (
+      command: string,
+      targetId: string,
+      config?: { [key: string]: any }
+    ) => void;
+  }
+}
 const backgrounds = [
   {
     id: 'gradient-1',
@@ -97,6 +105,14 @@ export default function Home() {
       link.click();
     } catch (err) {
       console.error('Error exporting image:', err);
+    }
+    if (typeof window !== 'undefined' && window.gtag) {
+      window.gtag('event', 'download_review', {
+        'event_category': 'engagement',
+        'event_label': 'png_export',
+        // Tu peux même tracker le nb d'étoiles pour le fun
+        'review_stars': rating 
+      });
     }
   }, []);
 
